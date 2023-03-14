@@ -26,7 +26,7 @@ print("Compressed:")
 print(compressed)
 
 serialised = serialise(compressed)
-print("\nSerialised:")
+print(f"\nSerialised (size: {len(serialised)}) :")
 print(serialised)
 
 deserialised = deserialise(serialised)

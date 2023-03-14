@@ -58,30 +58,38 @@ def serialise(compressed_list: CompressedList) -> str:
     possible_values = sorted(set(entry.value for entry in compressed_list.entries))
     value_lookup = {v: i for i, v in enumerate(possible_values)}
     deltas = [n - p for n, p in zip(possible_values[1:], possible_values[:-1])]
-    max_path_sizes = [
-        ceil(
-            log2(
-                max(compressed_list.entries, key=lambda entry, i=i: entry.path[i]).path[
-                    i
-                ]
-                + 1
+    max_path_sizes = (
+        [
+            ceil(
+                log2(
+                    max(
+                        compressed_list.entries, key=lambda entry, i=i: entry.path[i]
+                    ).path[i]
+                    + 1
+                )
             )
-        )
-        for i in range(len(compressed_list.shape))
-    ]
-    max_length_sizes = [
-        ceil(
-            log2(
-                max(
-                    compressed_list.entries, key=lambda entry, i=i: entry.lengths[i]
-                ).lengths[i]
-                + 1
+            for i in range(len(compressed_list.shape))
+        ]
+        if compressed_list.entries
+        else []
+    )
+    max_length_sizes = (
+        [
+            ceil(
+                log2(
+                    max(
+                        compressed_list.entries, key=lambda entry, i=i: entry.lengths[i]
+                    ).lengths[i]
+                    + 1
+                )
             )
-        )
-        for i in range(len(compressed_list.shape))
-    ]
+            for i in range(len(compressed_list.shape))
+        ]
+        if compressed_list.entries
+        else []
+    )
 
-    value_bit_length = ceil(log2(len(possible_values)))
+    value_bit_length = ceil(log2(len(possible_values) + 1))
     entries_bits = "".join(
         (
             pos_int_to_bits(value_lookup[entry.value], value_bit_length)
@@ -104,17 +112,20 @@ def serialise(compressed_list: CompressedList) -> str:
     # Convert numbers into dynamic int binary
     default_metadata = {
         "VN": pos_int_to_dynamic_bytes(VERSION),
-        "MP"
-        if possible_values[0] >= 0
-        else "MN": pos_int_to_dynamic_bytes(abs(possible_values[0])),
         "DP"
         if compressed_list.default_value >= 0
         else "DN": pos_int_to_dynamic_bytes(abs(compressed_list.default_value)),
         "SD": pos_int_list_to_dynamic_bytes(compressed_list.shape),
-        "VD": pos_int_list_to_dynamic_bytes(deltas),
-        "AS": pos_int_list_to_dynamic_bytes(max_path_sizes + max_length_sizes),
-        "DO": f"{len(entries_bits) % 8}",
     }
+    if possible_values:
+        default_metadata[
+            "MP" if possible_values[0] >= 0 else "MN"
+        ] = pos_int_to_dynamic_bytes(abs(possible_values[0]))
+        default_metadata["VD"] = pos_int_list_to_dynamic_bytes(deltas)
+        default_metadata["DO"] = f"{len(entries_bits) % 8}"
+        default_metadata["AS"] = pos_int_list_to_dynamic_bytes(
+            max_path_sizes + max_length_sizes
+        )
 
     output_parts = []
 
@@ -132,7 +143,8 @@ def serialise(compressed_list: CompressedList) -> str:
             for key, value in default_metadata.items()
         )
     )
-    output_parts.append("CD" + chr(0) + bits_to_bytes(entries_bits))
+    if possible_values:
+        output_parts.append("CD" + chr(0) + bits_to_bytes(entries_bits))
 
     output = chr(0).join(output_parts)
 
