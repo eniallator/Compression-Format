@@ -117,12 +117,11 @@ def consume_data_entry(
     return DataEntry(value, path, lengths)
 
 
-def compress(data: List[Data], metadata: Dict[str, str] = {}) -> CompressedList:
+def compress(data: List[Data]) -> CompressedList:
     """Compresses data into a flattened tuple of DataEntry objects
 
     Args:
         data (List[Data]): Any dimensional List of integers. It must have a consistent shape.
-        metadata (Dict[str, str]): Custom metadata to compress alongside the data. Defaults to {}.
 
     Returns:
         CompressedList: Compressed version of the data
@@ -147,4 +146,4 @@ def compress(data: List[Data], metadata: Dict[str, str] = {}) -> CompressedList:
     default_value = max(value_counts.items(), key=lambda item: item[1])[0]
     filtered_entries = list(filter(lambda entry: entry.value != default_value, entries))
 
-    return CompressedList(shape, default_value, filtered_entries, metadata)
+    return CompressedList(shape, default_value, filtered_entries)

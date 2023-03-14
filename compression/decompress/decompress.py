@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from ..types import CompressedList, Data
 
@@ -24,18 +24,18 @@ def set_data_entry(
             set_data_entry(data[i], value, path[1:], lengths[1:])
 
 
-def decompress(compressed_list: CompressedList) -> Tuple[List[Data], Dict[str, str]]:
+def decompress(compressed_list: CompressedList) -> List[Data]:
     """Decompresses a compressed list to give the original data/metadata back
 
     Args:
         compressed_list (CompressedList): Compressed data
 
     Returns:
-        Tuple[List[Data], Dict[str, str]]: Original data alongside any metadata that was compressed with it
+        List[Data]: Original data
     """
     data = build_shape(compressed_list.shape, compressed_list.default_value)
 
     for entry in compressed_list.entries:
         set_data_entry(data, entry.value, entry.path, entry.lengths)
 
-    return data, compressed_list.metadata
+    return data

@@ -21,18 +21,18 @@ data = build_shape(shape, lambda n: 2 * (n // shape[-1] % shape[-2]))
 print("Raw Data:")
 print(data)
 
-compressed = compress(data, {"foo": "bar", "hello": "world"})
+compressed = compress(data)
 print("Compressed:")
 print(compressed)
 
-serialised = serialise(compressed)
+serialised = serialise(compressed, {"foo": "bar", "hello": "world"})
 print(f"\nSerialised (size: {len(serialised)}) :")
 print(serialised)
 
-deserialised = deserialise(serialised)
-print("\nDeserialised:")
+deserialised, deserialised_metadata = deserialise(serialised)
+print(f"\nDeserialised (metadata found: {deserialised_metadata}):")
 print(deserialised)
 
-decompressed, metadata = decompress(deserialised)
+decompressed = decompress(deserialised)
 print("\nDecompressed:")
 print(decompressed)

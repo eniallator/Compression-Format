@@ -14,4 +14,3 @@ class CompressedList(NamedTuple):
     shape: Tuple[int]
     default_value: int
     entries: List[DataEntry]
-    metadata: Dict[str, str]

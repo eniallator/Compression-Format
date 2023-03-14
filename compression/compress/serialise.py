@@ -46,11 +46,12 @@ def sanitize(s: str) -> str:
     return s.replace(chr(1), chr(1) + chr(1)).replace(chr(0), chr(1) + chr(0))
 
 
-def serialise(compressed_list: CompressedList) -> str:
+def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) -> str:
     """Serialises a CompressedList to binary
 
     Args:
         compressed_list (CompressedList): Data to serialise
+        metadata (Dict[str, str]): Custom metadata to serialise alongside the data. Defaults to None.
 
     Returns:
         str: Serialised data
@@ -119,11 +120,11 @@ def serialise(compressed_list: CompressedList) -> str:
 
     output_parts = []
 
-    if compressed_list.metadata:
+    if metadata is not None:
         output_parts.append(
             chr(0).join(
-                sanitize(key) + chr(0) + sanitize(compressed_list.metadata[key])
-                for key in set(compressed_list.metadata.keys()) - RESERVED_KEYS
+                sanitize(key) + chr(0) + sanitize(metadata[key])
+                for key in set(metadata.keys()) - RESERVED_KEYS
             )
         )
 

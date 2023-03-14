@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from math import ceil, log2
 
 from ..types import DataEntry, CompressedList
@@ -42,14 +42,14 @@ def dynamic_bytes_to_pos_int_list(
     return int_list
 
 
-def deserialise(serialised: str) -> CompressedList:
+def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
     """Deserialises a compressed list that has been previously serialised
 
     Args:
         serialised (str): Serialised compressed list
 
     Returns:
-        CompressedList: Recovered compressed list object
+        Tuple[CompressedList, Dict[str,str]]: Deserialised compressed list object followed by any custom metadata found
     """
     i = 0
     curr_item = ""
@@ -147,9 +147,13 @@ def deserialise(serialised: str) -> CompressedList:
                     lengths.append(1)
             entries.append(DataEntry(value, path, lengths))
 
-    return CompressedList(
-        tuple(default_metadata["SD"]),
-        default_metadata["DN"] if "DN" in default_metadata else default_metadata["DP"],
-        entries,
+    return (
+        CompressedList(
+            tuple(default_metadata["SD"]),
+            default_metadata["DN"]
+            if "DN" in default_metadata
+            else default_metadata["DP"],
+            entries,
+        ),
         custom_metadata,
     )
