@@ -105,7 +105,33 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
             default_metadata["MP"] = dynamic_bytes_to_pos_int(metadata["MP"])
         else:
             default_metadata["MN"] = -dynamic_bytes_to_pos_int(metadata["MN"])
-        default_metadata["VD"] = dynamic_bytes_to_pos_int_list(metadata["VD"])
+        default_metadata["RO"] = int(metadata["RO"])
+        default_metadata["DB"] = dynamic_bytes_to_pos_int(metadata["DB"])
+        default_metadata["DR"] = dynamic_bytes_to_pos_int(metadata["DR"])
+
+        delta_bits = bytes_to_bits(metadata["VD"])
+        run_length_offset_deltas = []
+        i = 0
+        while i < len(delta_bits) - default_metadata["RO"]:
+            item = []
+
+            if default_metadata["DR"] > 0:
+                item.append(int(delta_bits[i : i + default_metadata["DR"]], base=2))
+                i += default_metadata["DR"]
+            else:
+                item.append(0)
+
+            if default_metadata["DB"] > 0:
+                item.append(int(delta_bits[i : i + default_metadata["DB"]], base=2))
+                i += default_metadata["DB"]
+            else:
+                item.append(0)
+
+            run_length_offset_deltas.append(item)
+
+        deltas = []
+        for offset_run, offset_delta in run_length_offset_deltas:
+            deltas.extend(offset_delta + 1 for _ in range(offset_run + 1))
 
         default_metadata["DO"] = int(metadata["DO"])
         default_metadata["AS"] = dynamic_bytes_to_pos_int_list(metadata["AS"])
@@ -114,7 +140,7 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
             if "MN" in default_metadata
             else default_metadata["MP"]
         ]
-        for delta in default_metadata["VD"]:
+        for delta in deltas:
             possible_values.append(possible_values[-1] + delta)
 
         value_bit_length = ceil(log2(len(possible_values) + 1))
@@ -141,7 +167,7 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
             for l in max_length_sizes:
                 # Lengths have to be 1 or greater, so adding 1 to each length, undoing the subtraction in serialisation
                 if l > 0:
-                    lengths.append(int(data_bits[i : i + l], base=2))
+                    lengths.append(int(data_bits[i : i + l], base=2) + 1)
                     i += l
                 else:
                     lengths.append(1)
@@ -155,5 +181,5 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
             else default_metadata["DP"],
             entries,
         ),
-        custom_metadata,
+        custom_metadata or None,
     )

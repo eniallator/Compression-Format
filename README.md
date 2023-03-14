@@ -37,15 +37,23 @@ Decompression is just the reverse of the above.
 - All special metadata keys will overwrite any pairs with the same keys found in the given metadata, as these are fundamental for the compression format to work
 - Complete list:
 
-| Key | Description                                                    |
-| --- | -------------------------------------------------------------- |
-| VN  | Version number of format                                       |
-| MP  | Minimum value of original data. Only included if it's positive |
-| MN  | Minimum value of original data. Only included if it's negative |
-| DP  | Default value of original data. Only included if it's positive |
-| DN  | Default value of original data. Only included if it's negative |
-| SD  | Shape of original data                                         |
-| VD  | Deltas between adjacent values in the sorted list of values    |
-| AS  | Bits per attribute                                             |
-| DO  | Data offset from the end byte                                  |
-| CD  | Compressed Data (always appears at the end of the metadata)    |
+| Key | Description                                                                             |
+| --- | --------------------------------------------------------------------------------------- |
+| VN  | Version number of format                                                                |
+| MP  | Minimum value of original data. Only included if it's positive                          |
+| MN  | Minimum value of original data. Only included if it's negative                          |
+| DP  | Default value of original data. Only included if it's positive                          |
+| DN  | Default value of original data. Only included if it's negative                          |
+| SD  | Shape of original data                                                                  |
+| VD  | Deltas between adjacent values in the sorted list of values that are run length encoded |
+| DB  | Delta bit length                                                                        |
+| DR  | Delta run bit length                                                                    |
+| RO  | Delta offset from the end byte                                                          |
+| AS  | Bits per attribute                                                                      |
+| DO  | Data offset from the end byte                                                           |
+| CD  | Compressed Data (always appears at the end of the metadata)                             |
+
+## Further Optimisations
+
+- Since lengths have to be 1 or greater, I have chosen to subtract 1 from them, so that if there is only a max length of 1, there won't be any bits allocated to it in the compressed data, and it's defaulted to 1 in deserialisation
+- Deltas have also been run length encoded

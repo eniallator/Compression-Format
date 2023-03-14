@@ -81,7 +81,7 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
                 max_length_sizes.append(0)
 
     value_bit_length = ceil(log2(len(possible_values) + 1))
-    entries_bits = "".join(
+    data_bits = "".join(
         (
             pos_int_to_bits(value_lookup[entry.value], value_bit_length)
             if len(possible_values) > 0
@@ -93,7 +93,7 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
             if max_path_sizes[i] > 0
         )
         + "".join(
-            pos_int_to_bits(n, max_length_sizes[i] - 1)
+            pos_int_to_bits(n - 1, max_length_sizes[i])
             for i, n in enumerate(entry.lengths)
             if max_length_sizes[i] > 0
         )
@@ -109,11 +109,36 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
         "SD": pos_int_list_to_dynamic_bytes(compressed_list.shape),
     }
     if possible_values:
+        run_length_offset_deltas = []
+        for d in deltas:
+            offset = d - 1
+            if (
+                not run_length_offset_deltas
+                or run_length_offset_deltas[-1][1] != offset
+            ):
+                run_length_offset_deltas.append([0, offset])
+            else:
+                run_length_offset_deltas[-1][0] += 1
+        delta_bit_length = ceil(
+            log2(max(item[1] for item in run_length_offset_deltas) + 1)
+        )
+        delta_run_bit_length = ceil(
+            log2(max(item[0] for item in run_length_offset_deltas) + 1)
+        )
+        delta_bits = "".join(
+            (pos_int_to_bits(run, delta_run_bit_length) if run > 0 else "")
+            + (pos_int_to_bits(delta, delta_bit_length) if delta > 0 else "")
+            for run, delta in run_length_offset_deltas
+        )
+
         default_metadata[
             "MP" if possible_values[0] >= 0 else "MN"
         ] = pos_int_to_dynamic_bytes(abs(possible_values[0]))
-        default_metadata["VD"] = pos_int_list_to_dynamic_bytes(deltas)
-        default_metadata["DO"] = f"{(8-len(entries_bits)) % 8}"
+        default_metadata["DR"] = pos_int_to_dynamic_bytes(delta_run_bit_length)
+        default_metadata["DB"] = pos_int_to_dynamic_bytes(delta_bit_length)
+        default_metadata["VD"] = bits_to_bytes(delta_bits)
+        default_metadata["RO"] = f"{(8-len(delta_bits)) % 8}"
+        default_metadata["DO"] = f"{(8-len(data_bits)) % 8}"
         default_metadata["AS"] = pos_int_list_to_dynamic_bytes(
             max_path_sizes + max_length_sizes
         )
@@ -135,7 +160,7 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
         )
     )
     if possible_values:
-        output_parts.append("CD" + chr(0) + bits_to_bytes(entries_bits))
+        output_parts.append("CD" + chr(0) + bits_to_bytes(data_bits))
 
     output = chr(0).join(output_parts)
 

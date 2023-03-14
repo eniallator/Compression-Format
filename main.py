@@ -22,11 +22,12 @@ print("Raw Data:")
 print(data)
 
 compressed = compress(data)
-print("Compressed:")
+print("\nCompressed:")
 print(compressed)
 
-serialised = serialise(compressed, {"foo": "bar", "hello": "world"})
-print(f"\nSerialised (size: {len(serialised)}) :")
+metadata = {"foo": "bar", "hello": "world"}
+serialised = serialise(compressed, metadata)
+print(f"\nSerialised (num bytes: {len(serialised.encode('utf-8'))}):")
 print(serialised)
 
 deserialised, deserialised_metadata = deserialise(serialised)
