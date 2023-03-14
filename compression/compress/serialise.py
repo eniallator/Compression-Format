@@ -58,42 +58,32 @@ def serialise(compressed_list: CompressedList) -> str:
     possible_values = sorted(set(entry.value for entry in compressed_list.entries))
     value_lookup = {v: i for i, v in enumerate(possible_values)}
     deltas = [n - p for n, p in zip(possible_values[1:], possible_values[:-1])]
-    max_path_sizes = (
-        [
-            ceil(
-                log2(
-                    max(
-                        compressed_list.entries, key=lambda entry, i=i: entry.path[i]
-                    ).path[i]
-                    + 1
-                )
-            )
-            for i in range(len(compressed_list.shape))
-        ]
-        if compressed_list.entries
-        else []
-    )
-    max_length_sizes = (
-        [
-            ceil(
-                log2(
-                    max(
-                        compressed_list.entries, key=lambda entry, i=i: entry.lengths[i]
-                    ).lengths[i]
-                    + 1
-                )
-            )
-            for i in range(len(compressed_list.shape))
-        ]
-        if compressed_list.entries
-        else []
-    )
+
+    max_path_sizes = []
+    if compressed_list.entries:
+        for i in range(len(compressed_list.shape)):
+            curr_max_path = max(
+                compressed_list.entries, key=lambda entry, i=i: entry.path[i]
+            ).path[i]
+            max_path_sizes.append(ceil(log2(curr_max_path + 1)))
+
+    # Lengths have to be 1 or greater, so subtracting 1 from each length
+    max_length_sizes = []
+    if compressed_list.entries:
+        for i in range(len(compressed_list.shape)):
+            curr_max_length = max(
+                compressed_list.entries, key=lambda entry, i=i: entry.lengths[i]
+            ).lengths[i]
+            if curr_max_length > 0:
+                max_length_sizes.append(ceil(log2(curr_max_length)))
+            else:
+                max_length_sizes.append(0)
 
     value_bit_length = ceil(log2(len(possible_values) + 1))
     entries_bits = "".join(
         (
             pos_int_to_bits(value_lookup[entry.value], value_bit_length)
-            if len(possible_values) > 1
+            if len(possible_values) > 0
             else ""
         )
         + "".join(
@@ -102,7 +92,7 @@ def serialise(compressed_list: CompressedList) -> str:
             if max_path_sizes[i] > 0
         )
         + "".join(
-            pos_int_to_bits(n, max_length_sizes[i])
+            pos_int_to_bits(n, max_length_sizes[i] - 1)
             for i, n in enumerate(entry.lengths)
             if max_length_sizes[i] > 0
         )
@@ -122,7 +112,7 @@ def serialise(compressed_list: CompressedList) -> str:
             "MP" if possible_values[0] >= 0 else "MN"
         ] = pos_int_to_dynamic_bytes(abs(possible_values[0]))
         default_metadata["VD"] = pos_int_list_to_dynamic_bytes(deltas)
-        default_metadata["DO"] = f"{len(entries_bits) % 8}"
+        default_metadata["DO"] = f"{(8-len(entries_bits)) % 8}"
         default_metadata["AS"] = pos_int_list_to_dynamic_bytes(
             max_path_sizes + max_length_sizes
         )

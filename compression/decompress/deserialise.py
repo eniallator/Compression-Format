@@ -69,14 +69,17 @@ def deserialise(serialised: str) -> CompressedList:
         else:
             # Flush current item
             if key is None:
-                key = curr_item
-            elif key == "CD":
-                curr_item += char + serialised[i:]
-                break
+                if curr_item == "CD":
+                    key = "CD"
+                    curr_item = serialised[i:]
+                    break
+                else:
+                    key = curr_item
+                    curr_item = ""
             else:
                 metadata[key] = curr_item or chr(0)
                 key = None
-            curr_item = ""
+                curr_item = ""
     metadata[key] = curr_item
 
     custom_metadata = {
@@ -136,11 +139,12 @@ def deserialise(serialised: str) -> CompressedList:
                     path.append(0)
             lengths = []
             for l in max_length_sizes:
+                # Lengths have to be 1 or greater, so adding 1 to each length, undoing the subtraction in serialisation
                 if l > 0:
                     lengths.append(int(data_bits[i : i + l], base=2))
                     i += l
                 else:
-                    lengths.append(0)
+                    lengths.append(1)
             entries.append(DataEntry(value, path, lengths))
 
     return CompressedList(
