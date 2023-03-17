@@ -89,7 +89,7 @@ def calculate_cuboid(
                 for i, (p, l) in enumerate(zip(path, lengths))
             )
             if check_all_same(data, offset_path, next_slice, value):
-                lengths = [n + int(i == dimension) for i, n in enumerate(lengths)]
+                lengths[dimension] += 1
             else:
                 break
     return tuple(lengths)

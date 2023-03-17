@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 from math import ceil, log2
 
+from ..exceptions import VersionMisMatch
 from ..types import DataEntry, CompressedList
 from ..constants import VERSION, RESERVED_KEYS, KEYS_FOR_ENTRIES, MIN_ENTRIES_KEYS
 
@@ -90,7 +91,8 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
 
     default_metadata["VN"] = dynamic_bytes_to_pos_int(metadata["VN"])
 
-    assert default_metadata["VN"] == VERSION, "Incompatible version read"
+    if default_metadata["VN"] != VERSION:
+        raise VersionMisMatch(default_metadata["VN"])
 
     if "DP" in metadata:
         default_metadata["DP"] = dynamic_bytes_to_pos_int(metadata["DP"])
