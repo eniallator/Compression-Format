@@ -1,4 +1,7 @@
-from compression import compress, serialise, deserialise, decompress
+from compression import (
+    compress_to_file,
+    decompress_from_file,
+)
 from functools import reduce
 
 
@@ -18,22 +21,10 @@ build_shape = lambda shape, generate_value=lambda n: n, path=[]: [
 
 data = build_shape(shape, lambda n: 2 * (n // shape[-1] % shape[-2]))
 
-print("Raw Data:")
-print(data)
-
-compressed = compress(data)
-print("\nCompressed:")
-print(compressed)
-
 metadata = {"foo": "bar", "hello": "world"}
-serialised = serialise(compressed, metadata)
-print(f"\nSerialised (num bytes: {len(serialised.encode('utf-8'))}):")
-print(serialised)
 
-deserialised, deserialised_metadata = deserialise(serialised)
-print(f"\nDeserialised (metadata found: {deserialised_metadata}):")
-print(deserialised)
+print(f"Before compression\n{data}\nWith metadata: {metadata}")
 
-decompressed = decompress(deserialised)
-print("\nDecompressed:")
-print(decompressed)
+compress_to_file("./example.data", data, metadata)
+data, metadata = decompress_from_file("./example.data")
+print(f"\nAfter decompression\n{data}\nWith metadata: {metadata}")
