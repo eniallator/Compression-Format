@@ -1,6 +1,6 @@
 # Compression Format
 
-Takes in an N-dimensional list of numbers, then compresses it, and then finally serialises it into a binary file.
+Takes in an N-dimensional list of integers, then compresses it, and then finally serialises it into a binary file.
 Decompression is just the reverse of the above.
 
 ## Compression Strategy
