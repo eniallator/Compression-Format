@@ -1,8 +1,8 @@
-from typing import Dict, List, Tuple
 from functools import reduce
+from typing import List, Tuple
 
-from ..types import Data, DataEntry, CompressedList
 from ..exceptions import InconsistentShape, UnexpectedLeaf
+from ..types import CompressedList, Data, DataEntry
 
 
 def validate_and_copy(
@@ -67,10 +67,8 @@ def check_all_same(
 
     is_leaf = len(next_slice) == 1
     for i in range(offset_path[0], offset_path[0] + next_slice[0]):
-        if (
-            is_leaf
-            and data[i] != value
-            or not is_leaf
+        if (is_leaf and data[i] != value) or (
+            not is_leaf
             and not check_all_same(data[i], offset_path[1:], next_slice[1:], value)
         ):
             return False

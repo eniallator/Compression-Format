@@ -1,9 +1,9 @@
-from typing import Dict, List, Tuple
 from math import ceil, log2
+from typing import Dict, List, Tuple
 
+from ..constants import KEYS_FOR_ENTRIES, MIN_ENTRIES_KEYS, RESERVED_KEYS, VERSION
 from ..exceptions import VersionMisMatch
-from ..types import DataEntry, CompressedList
-from ..constants import VERSION, RESERVED_KEYS, KEYS_FOR_ENTRIES, MIN_ENTRIES_KEYS
+from ..types import CompressedList, DataEntry
 
 
 def dynamic_bits_to_pos_int(
@@ -138,9 +138,11 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
         default_metadata["DO"] = int(metadata["DO"])
         default_metadata["AS"] = dynamic_bytes_to_pos_int_list(metadata["AS"])
         possible_values = [
-            default_metadata["MN"]
-            if "MN" in default_metadata
-            else default_metadata["MP"]
+            (
+                default_metadata["MN"]
+                if "MN" in default_metadata
+                else default_metadata["MP"]
+            )
         ]
         for delta in deltas:
             possible_values.append(possible_values[-1] + delta)
@@ -178,9 +180,11 @@ def deserialise(serialised: str) -> Tuple[CompressedList, Dict[str, str]]:
     return (
         CompressedList(
             tuple(default_metadata["SD"]),
-            default_metadata["DN"]
-            if "DN" in default_metadata
-            else default_metadata["DP"],
+            (
+                default_metadata["DN"]
+                if "DN" in default_metadata
+                else default_metadata["DP"]
+            ),
             entries,
         ),
         custom_metadata or None,

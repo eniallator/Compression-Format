@@ -1,4 +1,4 @@
+from .compress import compress, compress_to_file, serialise
+from .decompress import decompress, decompress_from_file, deserialise
 from .exceptions import InconsistentShape, UnexpectedLeaf
-from .types import Data, DataEntry, CompressedList
-from .compress import compress, serialise, compress_to_file
-from .decompress import decompress, deserialise, decompress_from_file
+from .types import CompressedList, Data, DataEntry

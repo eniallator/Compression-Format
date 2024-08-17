@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple
 
 
 Data = int | List["Data"]

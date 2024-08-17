@@ -3,14 +3,10 @@ from typing import List, Tuple
 from ..types import CompressedList, Data
 
 
-def build_shape(
-    shape: Tuple[int], default_value: int, path: List[int] = []
-) -> List[Data]:
+def build_shape(shape: Tuple[int], default_value: int) -> List[Data]:
     return [
-        default_value
-        if len(shape) == 1
-        else build_shape(shape[1:], default_value, [*path, i])
-        for i in range(shape[0])
+        (default_value if len(shape) == 1 else build_shape(shape[1:], default_value))
+        for _ in range(shape[0])
     ]
 
 

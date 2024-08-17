@@ -1,9 +1,8 @@
-from typing import Dict, List
 from math import ceil, log2
+from typing import Dict, List
 
-from .compress import compress
-from ..types import Data, CompressedList
-from ..constants import VERSION, RESERVED_KEYS
+from ..constants import RESERVED_KEYS, VERSION
+from ..types import CompressedList
 
 
 def pos_int_to_bits(n: int, length: int) -> str:
@@ -103,9 +102,9 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
     # Convert numbers into dynamic int binary
     default_metadata = {
         "VN": pos_int_to_dynamic_bytes(VERSION),
-        "DP"
-        if compressed_list.default_value >= 0
-        else "DN": pos_int_to_dynamic_bytes(abs(compressed_list.default_value)),
+        "DP" if compressed_list.default_value >= 0 else "DN": pos_int_to_dynamic_bytes(
+            abs(compressed_list.default_value)
+        ),
         "SD": pos_int_list_to_dynamic_bytes(compressed_list.shape),
     }
     if possible_values:
@@ -131,9 +130,9 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
             for run, delta in run_length_offset_deltas
         )
 
-        default_metadata[
-            "MP" if possible_values[0] >= 0 else "MN"
-        ] = pos_int_to_dynamic_bytes(abs(possible_values[0]))
+        default_metadata["MP" if possible_values[0] >= 0 else "MN"] = (
+            pos_int_to_dynamic_bytes(abs(possible_values[0]))
+        )
         default_metadata["DR"] = pos_int_to_dynamic_bytes(delta_run_bit_length)
         default_metadata["DB"] = pos_int_to_dynamic_bytes(delta_bit_length)
         default_metadata["VD"] = bits_to_bytes(delta_bits)
