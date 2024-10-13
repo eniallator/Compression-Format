@@ -1,18 +1,18 @@
 from functools import reduce
-from typing import List, Tuple
+from typing import Tuple
 
 from ..exceptions import InconsistentShape, UnexpectedLeaf
-from ..types import CompressedList, Data, DataEntry
+from ..types import CompressedList, DataEntry, IntListND
 
 
 def validate_and_copy(
-    data: List[Data],
+    data: IntListND,
     shape: Tuple[int] = tuple(),
     shape_idx: int = 0,
-    validate_only: bool = False,
-) -> Tuple[List[Data | None], Tuple[int]]:
+    build_shape: bool = True,
+) -> Tuple[IntListND, Tuple[int]]:
     data_copy = []
-    shape = shape if validate_only else (*shape, len(data))
+    shape = (*shape, len(data)) if build_shape else shape
     if len(data) != shape[shape_idx]:
         raise InconsistentShape(shape, len(data), shape_idx)
     for item in data:
@@ -20,17 +20,17 @@ def validate_and_copy(
             if len(shape) != shape_idx + 1:
                 raise UnexpectedLeaf(shape, shape_idx)
             data_copy.append(item)
-            validate_only = True
+            build_shape = False
         elif isinstance(item, list):
             if len(shape) <= shape_idx:
                 raise InconsistentShape(shape, len(item), shape_idx + 1)
             item_copy, item_shape = validate_and_copy(
-                item, shape, shape_idx + 1, validate_only
+                item, shape, shape_idx + 1, build_shape
             )
             data_copy.append(item_copy)
-            if not validate_only:
+            if build_shape:
                 shape = item_shape
-                validate_only = True
+                build_shape = False
         else:
             raise TypeError(
                 f"Expected an N-dimensional list of integers, found {type(item)}"
@@ -46,8 +46,8 @@ def make_path(shape: Tuple[int], index: int) -> tuple[int]:
     return tuple(path)
 
 
-def value_at(data: List[Data | None], path: Tuple[int]) -> int:
-    if len(path) == 0:
+def value_at(data: IntListND, path: Tuple[int]) -> int:
+    if not path:
         raise IndexError("Invalid data path")
     elif len(path) == 1:
         return data[path[0]]
@@ -56,7 +56,10 @@ def value_at(data: List[Data | None], path: Tuple[int]) -> int:
 
 
 def check_all_same(
-    data: List[Data | None], offset_path: Tuple[int], next_slice: Tuple[int], value: int
+    data: IntListND,
+    offset_path: Tuple[int],
+    next_slice: Tuple[int],
+    value: int,
 ) -> bool:
     if len(next_slice) == 0:
         return True
@@ -76,7 +79,7 @@ def check_all_same(
 
 
 def calculate_cuboid(
-    data: List[Data | None], shape: Tuple[int], path: Tuple[int], value: int
+    data: IntListND, shape: Tuple[int], path: Tuple[int], value: int
 ) -> Tuple[int]:
     lengths = [0] * len(shape)
     for dimension in range(len(shape) - 1, -1, -1):
@@ -93,9 +96,7 @@ def calculate_cuboid(
     return tuple(lengths)
 
 
-def reset_cuboid(
-    data: List[Data | None], path: Tuple[int], lengths: Tuple[int]
-) -> None:
+def reset_cuboid(data: IntListND, path: Tuple[int], lengths: Tuple[int]) -> None:
     for i in range(path[0], path[0] + lengths[0]):
         if len(path) == 1:
             data[i] = None
@@ -104,7 +105,7 @@ def reset_cuboid(
 
 
 def consume_data_entry(
-    data: List[Data | None], shape: Tuple[int], path: Tuple[int]
+    data: IntListND, shape: Tuple[int], path: Tuple[int]
 ) -> DataEntry:
     value = value_at(data, path)
 
@@ -115,11 +116,11 @@ def consume_data_entry(
     return DataEntry(value, path, lengths)
 
 
-def compress(data: List[Data]) -> CompressedList:
+def compress(data: IntListND) -> CompressedList:
     """Compresses data into a flattened tuple of DataEntry objects
 
     Args:
-        data (List[Data]): Any dimensional List of integers. It must have a consistent shape.
+        data (IntListND): Any dimensional List of integers. It must have a consistent shape.
 
     Returns:
         CompressedList: Compressed version of the data

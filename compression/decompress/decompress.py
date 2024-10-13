@@ -1,9 +1,9 @@
 from typing import List, Tuple
 
-from ..types import CompressedList, Data
+from ..types import CompressedList, IntListND
 
 
-def build_shape(shape: Tuple[int], default_value: int) -> List[Data]:
+def build_shape(shape: Tuple[int], default_value: int) -> IntListND:
     return [
         (default_value if len(shape) == 1 else build_shape(shape[1:], default_value))
         for _ in range(shape[0])
@@ -11,7 +11,7 @@ def build_shape(shape: Tuple[int], default_value: int) -> List[Data]:
 
 
 def set_data_entry(
-    data: List[Data], value: int, path: List[int], lengths: List[int]
+    data: IntListND, value: int, path: List[int], lengths: List[int]
 ) -> None:
     for i in range(path[0], path[0] + lengths[0]):
         if len(path) == 1:
@@ -20,14 +20,14 @@ def set_data_entry(
             set_data_entry(data[i], value, path[1:], lengths[1:])
 
 
-def decompress(compressed_list: CompressedList) -> List[Data]:
+def decompress(compressed_list: CompressedList) -> IntListND:
     """Decompresses a compressed list to give the original data/metadata back
 
     Args:
         compressed_list (CompressedList): Compressed data
 
     Returns:
-        List[Data]: Original data
+        IntListND: Original data
     """
     data = build_shape(compressed_list.shape, compressed_list.default_value)
 

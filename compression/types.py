@@ -1,7 +1,7 @@
 from typing import List, Tuple, NamedTuple
 
 
-Data = int | List["Data"]
+IntListND = List[int] | List["IntListND"]
 
 
 class DataEntry(NamedTuple):

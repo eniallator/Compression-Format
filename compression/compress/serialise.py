@@ -118,11 +118,11 @@ def serialise(compressed_list: CompressedList, metadata: Dict[str, str] = None) 
                 run_length_offset_deltas.append([0, offset])
             else:
                 run_length_offset_deltas[-1][0] += 1
-        delta_bit_length = ceil(
-            log2(max(item[1] for item in run_length_offset_deltas) + 1)
-        )
         delta_run_bit_length = ceil(
             log2(max(item[0] for item in run_length_offset_deltas) + 1)
+        )
+        delta_bit_length = ceil(
+            log2(max(item[1] for item in run_length_offset_deltas) + 1)
         )
         delta_bits = "".join(
             (pos_int_to_bits(run, delta_run_bit_length) if run > 0 else "")
